@@ -1,3 +1,6 @@
+import random
+import time
+
 from selenium import webdriver
 from selenium.webdriver.chrome.service import Service
 from selenium.webdriver.common.by import By
@@ -70,8 +73,8 @@ else:
     # Add additional handling if needed, e.g., logging out and trying again or notifying the user
 
 
-# Function to find all candidates in a job posting
-def find_all_candidates(job_posting_url):
+# Function to find all candidates in a job posting and invite them to apply
+def invite_eligible_candidates(job_posting_url):
     driver.get(job_posting_url)
 
     # Wait for the page to load completely
@@ -93,13 +96,27 @@ def find_all_candidates(job_posting_url):
         """
     )
 
-    # Print comparison chart URLs
+    # Visit each comparison chart URL and invite the candidate to apply
     for url in comparison_chart_urls:
-        print(f"Comparison Chart URL: {url}")
+        driver.get(f"https://employer.jobbank.gc.ca{url}")
+        wait.until(
+            EC.presence_of_element_located(
+                (By.XPATH, "//input[@value='Invite to apply']")
+            )
+        )
+
+        # Locate and click the "Invite to apply" button
+        invite_button = driver.find_element(
+            By.XPATH, "//input[@value='Invite to apply']"
+        )
+        invite_button.click()
+
+        # Wait for a random duration between 1 and 5 seconds to avoid being flagged as a bot
+        time.sleep(random.randint(1, 5))
 
 
 # Process each job posting link
 for job_posting_link in job_posting_links:
     print(f"Job Posting: {job_posting_link}")
-    find_all_candidates(job_posting_link)
-    print()
+    invite_eligible_candidates(job_posting_link)
+    print("All eligible candidates invited.\n")
