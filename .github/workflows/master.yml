@@ -9,7 +9,7 @@ jobs:
   package:
     strategy:
       matrix:
-        os: [ubuntu-latest, macos-latest]
+        os: [ubuntu-latest, macos-latest, windows-latest]
         python-version: [3.8]
 
     runs-on: ${{ matrix.os }}
@@ -30,13 +30,12 @@ jobs:
         pip install pyinstaller
 
     - name: Build single-file executable
-      run: |
-        pyinstaller --onefile gui.py
-        chmod 755 dist/gui
+      run: pyinstaller --onefile gui.py
 
     - name: Upload artifact
       uses: actions/upload-artifact@v3
       with:
         name: ${{ matrix.os }}-gui
-        path: dist/gui
-
+        path: |
+          dist/gui
+          dist/gui.exe
