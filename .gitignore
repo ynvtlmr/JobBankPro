@@ -1,2 +1,7 @@
 *.txt
 .idea
+build
+dist
+*.pkl
+*.spec
+.DS_Store
