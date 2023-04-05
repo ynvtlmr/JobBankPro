@@ -1,14 +1,16 @@
-import random
-import time
+from random import uniform
+from time import sleep
+from typing import Dict, List
+import logging
 
-from selenium import webdriver
+from selenium.webdriver import Chrome
 from selenium.webdriver.chrome.service import Service
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.support.ui import WebDriverWait
 
 
-def read_security_questions(file_name):
+def read_security_questions(file_name: str) -> Dict[str, str]:
     questions = {}
     with open(file_name, "r") as file:
         for line in file:
@@ -17,24 +19,30 @@ def read_security_questions(file_name):
     return questions
 
 
-def read_job_posting_links(file_name):
+def read_job_posting_links(file_name: str) -> List[str]:
     with open(file_name, "r") as file:
         return [line.strip() for line in file]
 
 
-# Read username, password, security questions, and job postings from text files
-with open("username.txt", "r") as file:
-    USERNAME = file.read().strip()
+def read_username(file_name: str) -> str:
+    with open(file_name, "r") as file:
+        return file.read().strip()
 
-with open("password.txt", "r") as file:
-    PASSWORD = file.read().strip()
 
+def read_password(file_name: str) -> str:
+    with open(file_name, "r") as file:
+        return file.read().strip()
+
+
+# Get user credentials and job posting links
+USERNAME = read_username("username.txt")
+PASSWORD = read_password("password.txt")
 SECURITY_QUESTIONS = read_security_questions("security_questions.txt")
-job_posting_links = read_job_posting_links("job_postings.txt")
+JOB_POSTING_LINKS = read_job_posting_links("job_postings.txt")
 
 # Initialize the Chrome driver
 chrome_service = Service("./chromedriver")
-driver = webdriver.Chrome(service=chrome_service)
+driver = Chrome(service=chrome_service)
 driver.get("https://employer.jobbank.gc.ca/employer/")
 
 # Log in
@@ -69,12 +77,12 @@ if question_text in SECURITY_QUESTIONS:
     continue_button = driver.find_element(By.ID, "continueButton")
     continue_button.click()
 else:
-    print(f"Unexpected security question: {question_text}")
+    logging.error("Unexpected security question: {question_text}")
     # Add additional handling if needed, e.g., logging out and trying again or notifying the user
 
 
 # Function to find all candidates in a job posting and invite them to apply
-def invite_eligible_candidates(job_posting_url):
+def invite_eligible_candidates(job_posting_url: str) -> None:
     driver.get(job_posting_url)
 
     # Wait for the page to load completely
@@ -112,11 +120,19 @@ def invite_eligible_candidates(job_posting_url):
         invite_button.click()
 
         # Wait for a random duration between 1 and 5 seconds to avoid being flagged as a bot
-        time.sleep(random.randint(1, 5))
+        sleep(uniform(1, 5))
 
 
 # Process each job posting link
-for job_posting_link in job_posting_links:
-    print(f"Job Posting: {job_posting_link}")
-    invite_eligible_candidates(job_posting_link)
-    print("All eligible candidates invited.\n")
+try:
+    for job_posting_link in JOB_POSTING_LINKS:
+        invite_eligible_candidates(job_posting_link)
+        logging.info(f"Invited candidates for {job_posting_link}.\n")
+    logging.info("All eligible candidates invited.\n")
+except Exception as e:
+    logging.error(f"An error occurred: {e}")
+finally:
+    driver.quit()
+
+# Close the browser
+driver.quit()
