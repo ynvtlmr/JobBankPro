@@ -3,7 +3,7 @@ name: Package Python Script
 on:
   push:
     branches:
-      - main
+      - master
 
 jobs:
   package:
